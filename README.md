@@ -19,17 +19,11 @@ RO Transport est un outil pédagogique conçu pour :
 
 ## 🖥️ Aperçu de l'application
 
-### Interface principale
+![Accueil](frontend/screenshots/home.png)
 
-![Accueil](screenshots/home.png)
+![Balas](frontend/screenshots/balas.png)
 
-### Résultat Balas-Hammer
-
-![Balas](screenshots/balas.png)
-
-### Résultat MINICO
-
-![Minico](screenshots/minico.png)
+![Minico](frontend/screenshots/minico.png)
 
 ---
 
