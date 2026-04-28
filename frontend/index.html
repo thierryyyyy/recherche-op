@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RO Transport — Hybrid Interface</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12; --surface: #161a20; --surface2: #1e242d; --border: #2a3040;
+    --accent: #00e5ff; --accent2: #ff6b35; --accent3: #7fff6e; --text: #e8edf5; --muted: #6b7a90;
+    --cell-active: rgba(0,229,255,0.12); --cell-alloc: rgba(127,255,110,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; }
+  header { border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; gap: 20px; background: var(--surface); }
+  .logo-mark { width: 36px; height: 36px; background: var(--accent); clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px; color: #000; flex-shrink: 0; }
+  header h1 { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+  header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 28px; flex-wrap: wrap; }
+  .tab { padding: 9px 22px; border-radius: 6px; font-size: 13px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all .2s; }
+  .tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .section-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .config-row { display: flex; gap: 14px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+  .btn { padding: 9px 20px; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary { background: var(--accent); color: #000; }
+
+  /* STRUCTURE ACADÉMIQUE DU TABLEAU (DESIGN MODERNE) */
+  .table-wrap { overflow-x: auto; margin-bottom: 20px; }
+  table.transport-table { border-collapse: collapse; width: 100%; font-family: 'IBM Plex Mono', monospace; }
+  table.transport-table th, table.transport-table td {
+    border: 1px solid var(--border);
+    width: 80px; height: 60px;
+    text-align: center; position: relative;
+    background: var(--surface);
+  }
+  table.transport-table th { color: var(--accent); font-size: 11px; height: 40px; background: var(--surface2); }
+  
+  /* Le petit carré pour le coût unitaire */
+  .cost-box {
+    position: absolute; top: 0; right: 0;
+    width: 30px; height: 30px;
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px; display: flex; align-items: center; justify-content: center;
+    background: var(--surface2); color: var(--accent);
+  }
+  .cost-box input {
+    width: 100%; border: none; background: transparent; color: var(--accent);
+    text-align: center; font-family: inherit; outline: none;
+  }
+  
+  .qty-val { font-size: 18px; font-weight: 700; color: var(--accent3); }
+  .input-qty { width: 100%; height: 100%; border: none; background: transparent; color: var(--accent2); text-align: center; font-size: 14px; font-weight: 600; outline: none; }
+  .label-cell { background: var(--surface2) !important; color: var(--accent); font-weight: 600; font-size: 12px; }
+  .supply-demand-cell { color: var(--accent2) !important; font-weight: 600; }
+
+  .cost-summary { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 18px 24px; margin-top: 16px; font-size: 24px; font-weight: 700; color: var(--accent3); font-family: 'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">RO</div>
+  <div>
+    <h1>Transport — Modèle Académique</h1>
+    <p>Backend Python • Structure PDF • Design Moderne</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('saisie',this)">① Données</button>
+    <button class="tab" onclick="switchTab('balas',this)">② Balas-Hammer</button>
+    <button class="tab" onclick="switchTab('minico',this)">③ MINICO</button>
+  </div>
+
+  <div class="panel active" id="panel-saisie">
+    <div class="section-title">Saisie des données</div>
+    <div class="config-row">
+      <div style="display:flex; flex-direction:column; gap:5px">
+        <label style="font-size:10px; color:var(--muted)">Origines (m)</label>
+        <input type="number" id="nb-origins" value="4" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:5px; border-radius:4px; width:60px" onchange="initTable()">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:5px">
+        <label style="font-size:10px; color:var(--muted)">Destinations (n)</label>
+        <input type="number" id="nb-dest" value="6" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:5px; border-radius:4px; width:60px" onchange="initTable()">
+      </div>
+      <button class="btn btn-primary" onclick="solve()">RÉSOUDRE VIA PYTHON</button>
+    </div>
+    <div id="input-container"></div>
+  </div>
+
+  <div class="panel" id="panel-balas"><div id="balas-content"></div></div>
+  <div class="panel" id="panel-minico"><div id="minico-content"></div></div>
+</div>
+
+<script>
+  let m = 4, n = 6;
+  let results = {};
+
+  function switchTab(id, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-'+id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function initTable() {
+    m = parseInt(document.getElementById('nb-origins').value);
+    n = parseInt(document.getElementById('nb-dest').value);
+    const container = document.getElementById('input-container');
+    
+    let html = '<div class="table-wrap"><table class="transport-table"><thead><tr><th></th>';
+    for(let j=1; j<=n; j++) html += `<th>${j}</th>`;
+    html += '<th class="supply-demand-cell">ai</th></tr></thead><tbody>';
+    
+    for(let i=0; i<m; i++) {
+      let label = String.fromCharCode(65 + i); 
+      html += `<tr><td class="label-cell">${label}</td>`;
+      for(let j=0; j<n; j++) {
+        html += `<td><div class="cost-box"><input type="number" id="c${i}_${j}" value="0"></div></td>`;
+      }
+      html += `<td><input type="number" id="s${i}" value="0" class="input-qty supply-demand-cell"></td></tr>`;
+    }
+    
+    html += '<tr><td class="label-cell supply-demand-cell">bj</td>';
+    for(let j=0; j<n; j++) html += `<td><input type="number" id="d${j}" value="0" class="input-qty supply-demand-cell"></td>`;
+    html += '<td></td></tr></tbody></table></div>';
+    
+    container.innerHTML = html;
+    loadDefaults();
+  }
+
+  function loadDefaults() {
+    if(m===4 && n===6) {
+      const c = [[24,22,61,49,83,35],[23,39,78,28,65,42],[67,56,92,24,53,54],[71,43,91,67,40,49]];
+      const s = [18,32,14,9], d = [9,11,28,6,14,5];
+      for(let i=0; i<4; i++) {
+        document.getElementById('s'+i).value = s[i];
+        for(let j=0; j<6; j++) document.getElementById(`c${i}_${j}`).value = c[i][j];
+      }
+      for(let j=0; j<6; j++) document.getElementById('d'+j).value = d[j];
+    }
+  }
+
+  async function solve() {
+    let costs = [], supply = [], demand = [];
+    for(let i=0; i<m; i++) {
+      costs.push([]);
+      for(let j=0; j<n; j++) costs[i].push(parseFloat(document.getElementById(`c${i}_${j}`).value) || 0);
+      supply.push(parseFloat(document.getElementById(`s${i}`).value) || 0);
+    }
+    for(let j=0; j<n; j++) demand.push(parseFloat(document.getElementById(`d${j}`).value) || 0);
+
+    try {
+      const response = await fetch('http://localhost:8000/solve', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({costs, supply, demand})
+      });
+      results = await response.json();
+      renderResults();
+      alert("Calculs terminés !");
+    } catch (e) { alert("Erreur: Le serveur Python ne répond pas."); }
+  }
+
+  function renderResults() {
+    renderMethod('balas', results.balas);
+    renderMethod('minico', results.minico);
+  }
+
+  function renderMethod(id, res) {
+    let html = `<div class="section-title">Résultat : ${id.toUpperCase()}</div>`;
+    html += '<div class="table-wrap"><table class="transport-table"><thead><tr><th></th>';
+    for(let j=1; j<=n; j++) html += `<th>${j}</th>`;
+    html += '<th class="supply-demand-cell">ai</th></tr></thead><tbody>';
+    
+    for(let i=0; i<m; i++) {
+      let label = String.fromCharCode(65 + i);
+      html += `<tr><td class="label-cell">${label}</td>`;
+      for(let j=0; j<n; j++) {
+        const val = res.X[i][j];
+        const cost = document.getElementById(`c${i}_${j}`).value;
+        html += `<td><div class="cost-box">${cost}</div><span class="qty-val">${val > 0 ? val : ''}</span></td>`;
+      }
+      html += `<td class="supply-demand-cell">${document.getElementById('s'+i).value}</td></tr>`;
+    }
+    
+    html += '<tr><td class="label-cell supply-demand-cell">bj</td>';
+    for(let j=0; j<n; j++) html += `<td class="supply-demand-cell">${document.getElementById('d'+j).value}</td>`;
+    html += '<td></td></tr></tbody></table></div>';
+    html += `<div class="cost-summary">Z = ${res.Z}</div>`;
+    
+    document.getElementById(id+'-content').innerHTML = html;
+  }
+
+  initTable();
+</script>
+</body>
+</html>
